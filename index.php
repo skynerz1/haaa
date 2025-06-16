@@ -1,9 +1,11 @@
 <?php
 
-define('API_KEY', '5114433486:AAE3OfitLe5UGde5r7sLQWI2JtHDfmHO_WI');
+// توكن البوت
+define('API_KEY', '5114433486:AAFhKB56wAVDsjJGzYiA_kc1EOJe_nGcd1c');
 
+// دالة تنفيذ الأوامر
 function bot($method, $datas = []) {
-    $url = "https://api.telegram.org/bot" . API_KEY . "/$method";
+    $url = "https://api.telegram.org/bot" . API_KEY . "/" . $method;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -13,28 +15,16 @@ function bot($method, $datas = []) {
     return json_decode($res, true);
 }
 
-$step_file = "steps.json";
-$data_file = "data.json";
-$user_images_file = "user_images.json";
-$lang_file = "languages.json";
-
-$steps = file_exists($step_file) ? json_decode(file_get_contents($step_file), true) : [];
-$data = file_exists($data_file) ? json_decode(file_get_contents($data_file), true) : [];
-$user_images = file_exists($user_images_file) ? json_decode(file_get_contents($user_images_file), true) : [];
-$languages = file_exists($lang_file) ? json_decode(file_get_contents($lang_file), true) : [];
-
-function save_json($filename, $data) {
-    file_put_contents($filename, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-}
-
+// استقبال التحديثات من Telegram
 $update = json_decode(file_get_contents("php://input"), true);
-$message = $update['message'] ?? null;
-$callback = $update['callback_query'] ?? null;
 
-function get_lang($user_id) {
-    global $languages;
-    return $languages[$user_id] ?? 'ar';
-}
+// استخراج البيانات الأساسية
+$message = $update["message"];
+$text = $message["text"];
+$chat_id = $message["chat"]["id"];
+$user_id = $message["from"]["id"];
+$username = $message["from"]["username"];
+$first_name = $message["from"]["first_name"];
 $message = $update['message'] ?? "";
 $message_id = $message['message_id'] ?? "";
 $chat_id = $message['chat']['id'] ?? "";
