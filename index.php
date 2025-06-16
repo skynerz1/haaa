@@ -18,6 +18,10 @@ function bot($method, $datas = []) {
 // استقبال التحديثات من Telegram
 $update = json_decode(file_get_contents("php://input"), true);
 
+
+
+
+
 // استخراج البيانات الأساسية
 $message = $update["message"];
 $text = $message["text"];
@@ -51,6 +55,8 @@ function get_lang($user_id) {
     global $languages;
     return $languages[$user_id] ?? 'ar';
 }
+
+
 
 function text($key, $lang) {
     $texts = [
@@ -345,79 +351,85 @@ if ($message) {
             }
         }
 
-        if ($callback) {
-            $chat_id = $callback['message']['chat']['id'];
-            $msg_id = $callback['message']['message_id'];
-            $user_id = $callback['from']['id'];
-            $data_cb = $callback['data'];
-            $lang = get_lang($user_id);
+if ($callback) {
+    $chat_id = $callback['message']['chat']['id'];
+    $msg_id = $callback['message']['message_id'];
+    $user_id = $callback['from']['id'];
+    $data_cb = $callback['data'];
+    $lang = get_lang($user_id);
 
-            if ($data_cb === 'show_langs') {
-                send_lang_menu($chat_id, $msg_id, $lang);
-                exit;
-            }
+    if ($data_cb === 'show_langs') {
+        send_lang_menu($chat_id, $msg_id, $lang);
+        exit;
+    }
 
-            if ($data_cb === 'start_back') {
-                send_start($chat_id, $lang);
-                exit;
-            }
+    if ($data_cb === 'start_back') {
+        // حذف الرسالة القديمة قبل إرسال رسالة ستارت جديدة
+        bot('deleteMessage', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id
+        ]);
 
-            if ($data_cb === 'lang_ar') {
-                $languages[$user_id] = 'ar';
-                save_json($lang_file, $languages);
-                bot('answerCallbackQuery', ['callback_query_id' => $callback['id'], 'text' => text('lang_set_ar', 'ar')]);
-                send_lang_menu($chat_id, $msg_id, 'ar');
-                exit;
-            }
+        send_start($chat_id, $lang);
+        exit;
+    }
 
-            if ($data_cb === 'lang_en') {
-                $languages[$user_id] = 'en';
-                save_json($lang_file, $languages);
-                bot('answerCallbackQuery', ['callback_query_id' => $callback['id'], 'text' => text('lang_set_en', 'en')]);
-                send_lang_menu($chat_id, $msg_id, 'en');
-                exit;
-            }
+    if ($data_cb === 'lang_ar') {
+        $languages[$user_id] = 'ar';
+        save_json($lang_file, $languages);
+        bot('answerCallbackQuery', ['callback_query_id' => $callback['id'], 'text' => text('lang_set_ar', 'ar')]);
+        send_lang_menu($chat_id, $msg_id, 'ar');
+        exit;
+    }
 
-            if ($data_cb === 'show_guide_menu') {
-                send_guide_menu($chat_id, $msg_id, $lang);
-                exit;
-            }
+    if ($data_cb === 'lang_en') {
+        $languages[$user_id] = 'en';
+        save_json($lang_file, $languages);
+        bot('answerCallbackQuery', ['callback_query_id' => $callback['id'], 'text' => text('lang_set_en', 'en')]);
+        send_lang_menu($chat_id, $msg_id, 'en');
+        exit;
+    }
 
-            if ($data_cb === 'show_colors') {
-                bot('editMessageText', [
-                    'chat_id' => $chat_id,
-                    'message_id' => $msg_id,
-                    'text' => text('colors_text', $lang),
-                    'parse_mode' => 'Markdown',
-                    'reply_markup' => json_encode([
-                        'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'show_guide_menu']]]
-                    ])
-                ]);
-                exit;
-            }
+    if ($data_cb === 'show_guide_menu') {
+        send_guide_menu($chat_id, $msg_id, $lang);
+        exit;
+    }
 
-            if ($data_cb === 'show_full_guide') {
-                bot('editMessageText', [
-                    'chat_id' => $chat_id,
-                    'message_id' => $msg_id,
-                    'text' => text('full_guide_text', $lang),
-                    'parse_mode' => 'Markdown',
-                    'reply_markup' => json_encode([
-                        'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'show_guide_menu']]]
-                    ])
-                ]);
-                exit;
-            }
+    if ($data_cb === 'show_colors') {
+        bot('editMessageText', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id,
+            'text' => text('colors_text', $lang),
+            'parse_mode' => 'Markdown',
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'show_guide_menu']]]
+            ])
+        ]);
+        exit;
+    }
 
-            if ($data_cb === 'start_desc') {
-                bot('editMessageText', [
-                    'chat_id' => $chat_id,
-                    'message_id' => $msg_id,
-                    'text' => text('start_photo', $lang),
-                    'reply_markup' => json_encode([
-                        'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'start_back']]]
-                    ])
-                ]);
-                exit;
-            }
-        }
+    if ($data_cb === 'show_full_guide') {
+        bot('editMessageText', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id,
+            'text' => text('full_guide_text', $lang),
+            'parse_mode' => 'Markdown',
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'show_guide_menu']]]
+            ])
+        ]);
+        exit;
+    }
+
+    if ($data_cb === 'start_desc') {
+        bot('editMessageText', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id,
+            'text' => text('start_photo', $lang),
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'start_back']]]
+            ])
+        ]);
+        exit;
+    }
+}
