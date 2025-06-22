@@ -43,6 +43,10 @@ function save_json($filename, $data) {
     file_put_contents($filename, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 }
 
+$caption_style_file = "caption_styles.json";
+$caption_styles = file_exists($caption_style_file) ? json_decode(file_get_contents($caption_style_file), true) : [];
+
+
 $update = json_decode(file_get_contents("php://input"), true);
 $message = $update['message'] ?? null;
 $callback = $update['callback_query'] ?? null;
@@ -101,6 +105,7 @@ function text($key, $lang) {
         'guide_button' => ['ar' => '📚 شرح البوت', 'en' => '📚 Bot Guide'],
         'colors_button' => ['ar' => '🎨 الالوان المتاحة', 'en' => '🎨 Available Colors'],
         'full_guide_button' => ['ar' => '📖 شرح البوت كامل', 'en' => '📖 Full Bot Guide'],
+        'infow9f' => ['ar' => '📋 الوصوف المتاحة', 'en' => '📋 Available Styles'],
         'back' => ['ar' => 'رجوع', 'en' => 'Back'],
 
         // نصوص شرح الالوان
@@ -200,6 +205,127 @@ function build_caption($car) {
     return $caption;
 }
 
+function build_caption_v2($car) {
+    $caption = "💎 𝗘𝗹𝗶𝘁𝗲 𝗚𝗧𝗔 𝗕𝘂𝗶𝗹𝗱 💎\n";
+    $caption .= "🚗 Name: {$car['name']}\n";
+    $caption .= "🔧 Route: {$car['route']}\n";
+    $color_with_emoji = color_to_emoji($car['color'] ?? '', get_lang($car['user_id'] ?? 0));
+    $caption .= "🎨 Color: {$color_with_emoji}\n";
+    $caption .= "📛 Plate: {$car['plate']}\n";
+    $caption .= "🎺 Horn: {$car['horn']}\n";
+    $caption .= "🪟 Glass: {$car['glass']}\n";
+    $smoke_with_emoji = color_to_emoji($car['smoke'] ?? '', get_lang($car['user_id'] ?? 0));
+    $caption .= "💨 Smoke: {$smoke_with_emoji}\n";
+    $caption .= "🛠 Board: {$car['board']}\n";
+    $caption .= "🔰 Targa: " . targa_to_emoji($car['targa'] ?? '') . "\n";
+    $caption .= "\n🏁 𝗙𝘂𝗹𝗹 𝗺𝗼𝗱 ✔️ | 𝗣𝗦𝟰 ✔️\n";
+    $caption .= "CREATIONS ❥(@dfkzbot)";
+    return $caption;
+}
+
+function build_caption_v3($car) {
+    $lang = get_lang($car['user_id'] ?? 0);
+
+    // الألوان مع إيموجيات
+    $primary = color_to_emoji($car['color'] ?? '', $lang);
+    $secondary = color_to_emoji($car['glass'] ?? '', $lang); // ممكن تغيرها للون ثاني إذا عندك
+
+    // الكفرات
+    $wheels = mb_strtolower(trim($car['route'] ?? ''));
+    if ($wheels === 'بنز') {
+        $wheels_text = "𝐵𝑒𝑛𝑛𝑦’𝑠 𝑊ℎ𝑒𝑒𝑙𝑠";
+    } elseif ($wheels === 'فورملا') {
+        $wheels_text = "𝐹𝟣 𝑊ℎ𝑒𝑒𝑙𝑠";
+    } else {
+        $wheels_text = "𝑈𝑛𝑠𝑒𝑙𝑒𝑐𝑡𝑒𝑑 𝑊ℎ𝑒𝑒𝑙 𝑐𝑜𝑙𝑜𝑟";
+    }
+
+    // دخان الإطارات
+    $smoke = mb_strtolower(trim($car['smoke'] ?? ''));
+    if ($smoke === 'امريكي' || $smoke === 'american') {
+        $smoke_text = "𝑃𝑎𝑡𝑟𝑖𝑜𝑡 𝑇𝑖𝑟𝑒 𝑆𝑚𝑜𝑘𝑒";
+    } elseif ($smoke !== '') {
+        $smoke_emoji = color_to_emoji($smoke, $lang);
+        $smoke_text = "𝑇𝑖𝑟𝑒 𝑆𝑚𝑜𝑘𝑒 {$smoke_emoji}";
+    } else {
+        $smoke_text = "𝑇𝑖𝑟𝑒 𝑆𝑚𝑜𝑘𝑒";
+    }
+
+    $caption = "𝑁𝑜𝑛 𝐵𝑝—{$primary}\n";
+    $caption .= "{$wheels_text}—{$secondary}\n";
+    $caption .= "𝑈𝑛𝑠𝑒𝑙𝑒𝑐𝑡𝑒𝑑 𝑅𝑒𝑠𝑝𝑟𝑎𝑦—{$primary}\n";
+    $caption .= "𝑈𝑛𝑠𝑒𝑙𝑒𝑐𝑡𝑒𝑑 𝑊ℎ𝑒𝑒𝑙 𝑐𝑜𝑙𝑜𝑟—{$secondary}\n";
+    $caption .= "𝑌𝑎𝑛𝑘𝑡𝑜𝑛 𝑃𝑙𝑎𝑡𝑒—{$primary}\n";
+    $caption .= "{$smoke_text}—{$secondary}\n";
+    $caption .= "𝑁𝑜 𝑇𝑟𝑎𝑑𝑒／𝐹𝑜𝑟 𝑆𝑒𝑙𝑙—{$primary}\n\n";
+    $caption .= "𝐶𝑅𝐸𝐴𝑇𝐼𝑂𝑁𝑆 ❥(@dfkzbot)";
+
+    return $caption;
+}
+function build_caption_v4($car) {
+    $primary_color = color_to_emoji($car['color'] ?? '', 'ar'); // اللون الأساسي
+    $secondary_color = color_to_emoji($car['glass'] ?? '', 'ar'); // هنا سنعتبر الزجاج هو اللون الثانوي (تقدر تعدله)
+
+    $color_is_modded = stripos($car['color'], 'مهكر') !== false;
+    $color_has_pearl = stripos($car['color'], 'لمعة') !== false;
+
+    $color_text = '';
+    if ($color_is_modded && $color_has_pearl) {
+        $color_text = "𝘔𝘰𝘥𝘥𝘦𝘥 𝘤𝘰𝘭𝘰𝘶𝘳+𝘱𝘦𝘢𝘳𝘭𝘦𝘴𝘤𝘦𝘯𝘵";
+    } elseif ($color_is_modded) {
+        $color_text = "𝘔𝘰𝘥𝘥𝘦𝘥 𝘤𝘰𝘭𝘰𝘶𝘳";
+    } else {
+        $color_text = $primary_color . " 𝘤𝘰𝘭𝘰𝘶𝘳";
+    }
+
+    $wheels = mb_strtolower($car['route'] ?? '');
+    if ($wheels === 'بنز') {
+        $wheels_text = "𝘉𝘦𝘯𝘯𝘺’𝘴 𝘸𝘩𝘦𝘦𝘭𝘴";
+    } elseif ($wheels === 'فورملا') {
+        $wheels_text = "𝘍𝟣 𝘸𝘩𝘦𝘦𝘭𝘴";
+    } else {
+        $wheels_text = "𝘜𝘯𝘴𝘦𝘭𝘦𝘤𝘵𝘦𝘥 𝘸𝘩𝘦𝘦𝘭 𝘤𝘰𝘭𝘰𝘶𝘳";
+    }
+
+    $plate_text = "𝘠𝘢𝘯𝘬𝘵𝘰𝘯 𝘱𝘭𝘢𝘵𝘦𝘴";
+
+    $glass = mb_strtolower($car['glass'] ?? '');
+    if ($glass === 'اخضر' || $glass === 'green') {
+        $glass_text = "𝘜𝘯𝘴𝘦𝘭𝘦𝘤𝘵𝘦𝘥 𝘸𝘪𝘯𝘥𝘰𝘸𝘴 (𝘨𝘳𝘦𝘦𝘯 𝘵𝘪𝘯𝘵)";
+    } else {
+        $glass_text = "𝘜𝘯𝘴𝘦𝘭𝘦𝘤𝘵𝘦𝘥 𝘸𝘪𝘯𝘥𝘰𝘸𝘴 (" . ($car['glass'] ?? 'custom') . ")";
+    }
+
+    $horn = mb_strtolower($car['horn'] ?? '');
+    if ($horn === 'هالوين' || $horn === 'halloween') {
+        $horn_text = "𝘜𝘯𝘴𝘦𝘭𝘦𝘤𝘵𝘦𝘥 𝘩𝘰𝘳𝘯 (𝘏𝘢𝘭𝘭𝘰𝘸𝘦𝘦𝘯 𝘩𝘰𝘳𝘯)";
+    } else {
+        $horn_text = "𝘜𝘯𝘴𝘦𝘭𝘦𝘤𝘵𝘦𝘥 𝘩𝘰𝘳𝘯 (" . ($car['horn'] ?? 'custom') . ")";
+    }
+
+    $smoke = mb_strtolower($car['smoke'] ?? '');
+    if ($smoke === 'امريكي' || $smoke === 'american') {
+        $smoke_text = "𝘗𝘢𝘵𝘳𝘪𝘰𝘵 𝘵𝘪𝘳𝘦 𝘴𝘮𝘰𝘬𝘦";
+    } elseif (!empty($smoke)) {
+        $emoji = color_to_emoji($smoke, 'ar');
+        $smoke_text = $emoji . " 𝘵𝘪𝘳𝘦 𝘴𝘮𝘰𝘬𝘦";
+    } else {
+        $smoke_text = "𝘜𝘯𝘴𝘦𝘭𝘦𝘤𝘵𝘦𝘥 𝘴𝘮𝘰𝘬𝘦";
+    }
+
+    $car_name = $car['name'] ?? 'Unknown';
+
+    return "⚡️ {$car_name} ⚡️\n\n" .
+           "▪️{$wheels_text}\n" .
+           "▪️{$plate_text}\n" .
+           "▪️{$color_text}\n" .
+           "▪️{$glass_text}\n" .
+           "▪️{$horn_text}\n" .
+           "▪️{$smoke_text}\n\n" .
+           "𝐶𝑅𝐸𝐴𝑇𝐼𝑂𝑁𝑆 ❥(@dfkzbot)";
+}
+
+
 function send_start($chat_id, $lang) {
     $text = text('start_msg', $lang);
     $buttons = [
@@ -208,7 +334,9 @@ function send_start($chat_id, $lang) {
             ['text' => text('guide_button', $lang), 'callback_data' => 'show_guide_menu'],
         ],
         [
-            ['text' => $lang === 'ar' ? 'ابدا الوصف' : 'Start Description', 'callback_data' => 'start_desc'],
+        ['text' => $lang === 'ar' ? '🚀 بدء الوصف' : '🚀 Start Description', 'callback_data' => 'show_desc_menu'],
+
+
             ['text' => $lang === 'ar' ? 'المطور' : 'Developer', 'url' => 'https://t.me/wgggk']
         ]
     ];
@@ -218,6 +346,65 @@ function send_start($chat_id, $lang) {
         'reply_markup' => json_encode(['inline_keyboard' => $buttons])
     ]);
 }
+
+function send_desc_menu($chat_id, $msg_id = null, $lang = 'ar') {
+    $desc_buttons = [
+        [
+            ['text' => $lang === 'ar' ? '🚗 وصف سيارات وشخصيات' : '🚗 Cars & Characters', 'callback_data' => 'desc_cars']
+        ],
+        [
+            ['text' => $lang === 'ar' ? '✈️ وصف طيارات' : '✈️ Planes', 'callback_data' => 'desc_planes']
+        ],
+        [
+            ['text' => $lang === 'ar' ? '🏍️ وصف دبابات' : '🏍️ Bikes', 'callback_data' => 'desc_bikes']
+        ],
+        [
+            ['text' => text('back', $lang), 'callback_data' => 'start_back']
+        ]
+    ];
+
+    $params = [
+        'chat_id' => $chat_id,
+        'text' => $lang === 'ar' ? "🚀 اختر نوع الوصف:" : "🚀 Choose description type:",
+        'reply_markup' => json_encode(['inline_keyboard' => $desc_buttons])
+    ];
+
+    if ($msg_id !== null) {
+        $params['message_id'] = $msg_id;
+        bot('editMessageText', $params);
+    } else {
+        bot('sendMessage', $params);
+    }
+}
+function send_cars_characters_menu($chat_id, $msg_id = null, $lang = 'ar') {
+    $buttons = [
+        [
+            ['text' => $lang === 'ar' ? '✨ وصف رقم 1' : '✨ Style 1', 'callback_data' => 'start_desc_1'],
+            ['text' => $lang === 'ar' ? '💎 وصف رقم 2' : '💎 Style 2', 'callback_data' => 'start_desc_2'],
+        ],
+        [
+            ['text' => $lang === 'ar' ? '🧊 وصف رقم 3' : '🧊 Style 3', 'callback_data' => 'start_desc_3'],
+            ['text' => $lang === 'ar' ? '🎭 وصف رقم 4' : '🎭 Style 4', 'callback_data' => 'start_desc_4'],
+        ],
+        [
+            ['text' => text('back', $lang), 'callback_data' => 'show_desc_menu']
+        ]
+    ];
+
+    $params = [
+        'chat_id' => $chat_id,
+        'text' => $lang === 'ar' ? 'اختر نمط الوصف:' : 'Choose a caption style:',
+        'reply_markup' => json_encode(['inline_keyboard' => $buttons])
+    ];
+
+    if ($msg_id !== null) {
+        $params['message_id'] = $msg_id;
+        bot('editMessageText', $params);
+    } else {
+        bot('sendMessage', $params);
+    }
+}
+
 
 function send_lang_menu($chat_id, $msg_id = null, $lang = 'ar') {
     $lang_buttons = [
@@ -249,6 +436,8 @@ function send_guide_menu($chat_id, $msg_id = null, $lang = 'ar') {
         [
             ['text' => text('colors_button', $lang), 'callback_data' => 'show_colors'],
             ['text' => text('full_guide_button', $lang), 'callback_data' => 'show_full_guide'],
+            ['text' => text('infow9f', $lang), 'callback_data' => 'infow9f'],
+            
         ],
         [
             ['text' => text('back', $lang), 'callback_data' => 'start_back']
@@ -288,6 +477,8 @@ if ($message) {
         send_guide_menu($chat_id, null, $lang);
         exit;
     }
+
+
 
     if ($text === '/mycar') {
         if (isset($user_images[$user_id])) {
@@ -353,7 +544,20 @@ if ($message) {
                     save_json($data_file, $data);
                     save_json($user_images_file, $user_images);
 
-                    $caption = build_caption($car);
+                    $style = $caption_styles[$user_id] ?? 1;
+
+                    if ($style === 4) {
+                        $caption = build_caption_v4($car); // وصف رقم 4 الجديد
+                    } elseif ($style === 3) {
+                        $caption = build_caption_v3($car); // وصف رقم 3
+                    } elseif ($style === 2) {
+                        $caption = build_caption_v2($car); // وصف رقم 2
+                    } else {
+                        $caption = build_caption($car);    // وصف رقم 1 (الأساسي)
+                    }
+
+
+
 
                     bot('sendPhoto', [
                         'chat_id' => $chat_id,
@@ -370,6 +574,90 @@ if ($message) {
             }
         }
 
+function save_caption_style($user_id, $style) {
+    global $caption_styles, $caption_style_file;
+    $caption_styles[$user_id] = $style;
+    file_put_contents($caption_style_file, json_encode($caption_styles, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+}
+
+
+
+
+
+function infow9f($chat_id, $msg_id, $lang) {
+    $buttons = [
+        [
+            ['text' => '🚗 ' . ($lang === 'ar' ? 'وصف سيارات وشخصيات' : 'Cars & Characters'), 'callback_data' => 'preview_cars']
+        ],
+        [
+            ['text' => '✈️ ' . ($lang === 'ar' ? 'وصف طيارات' : 'Planes'), 'callback_data' => 'preview_planes']
+        ],
+        [
+            ['text' => '🏍️ ' . ($lang === 'ar' ? 'وصف دبابات' : 'Bikes'), 'callback_data' => 'preview_bikes']
+        ],
+        [
+            ['text' => text('back', $lang), 'callback_data' => 'show_guide_menu']
+        ]
+    ];
+
+    bot('editMessageText', [
+        'chat_id' => $chat_id,
+        'message_id' => $msg_id,
+        'text' => $lang === 'ar' ? 'اختر نوع الوصف للمعاينة:' : 'Choose a style category to preview:',
+        'reply_markup' => json_encode(['inline_keyboard' => $buttons])
+    ]);
+}
+
+function preview_cars_menu($chat_id, $msg_id, $lang) {
+    $buttons = [
+        [
+            ['text' => $lang === 'ar' ? '✨ وصف رقم 1' : '✨ Style 1', 'callback_data' => 'preview_desc_1']
+        ],
+        [
+            ['text' => $lang === 'ar' ? '💎 وصف رقم 2' : '💎 Style 2', 'callback_data' => 'preview_desc_2']
+        ],
+        [
+            ['text' => $lang === 'ar' ? '🧊 وصف رقم 3' : '🧊 Style 3', 'callback_data' => 'preview_desc_3']
+        ],
+        [
+            ['text' => $lang === 'ar' ? '🧊 وصف رقم 4' : '🧊 Style 4', 'callback_data' => 'preview_desc_4']
+        ],
+        [
+            ['text' => text('back', $lang), 'callback_data' => 'infow9f']
+        ]
+    ];
+
+    bot('editMessageText', [
+        'chat_id' => $chat_id,
+        'message_id' => $msg_id,
+        'text' => $lang === 'ar' ? 'اختر وصف لمعاينته:' : 'Choose a style to preview:',
+        'reply_markup' => json_encode(['inline_keyboard' => $buttons])
+    ]);
+}
+
+function send_preview_image($chat_id, $msg_id, $img_url, $caption, $lang) {
+    bot('deleteMessage', [
+        'chat_id' => $chat_id,
+        'message_id' => $msg_id
+    ]);
+
+    bot('sendPhoto', [
+        'chat_id' => $chat_id,
+        'photo' => $img_url,
+        'caption' => $caption,
+        'reply_markup' => json_encode([
+            'inline_keyboard' => [
+                [[
+                    'text' => text('back', $lang),
+                    'callback_data' => 'preview_cars'
+                ]]
+            ]
+        ])
+    ]);
+}
+
+
+
 if ($callback) {
     $chat_id = $callback['message']['chat']['id'];
     $msg_id = $callback['message']['message_id'];
@@ -377,10 +665,115 @@ if ($callback) {
     $data_cb = $callback['data'];
     $lang = get_lang($user_id);
 
+if ($data_cb === 'preview_cars') {
+    preview_cars_menu($chat_id, $msg_id, $lang);
+    exit;
+}
+
+if ($data_cb === 'preview_desc_1') {
+    send_preview_image($chat_id, $msg_id, 'https://t.me/fx2data/42', '✨ Style 1 Preview', $lang);
+    exit;
+}
+if ($data_cb === 'preview_desc_2') {
+    send_preview_image($chat_id, $msg_id, 'https://t.me/fx2data/45', '💎 Style 2 Preview', $lang);
+    exit;
+}
+if ($data_cb === 'preview_desc_3') {
+    send_preview_image($chat_id, $msg_id, 'https://t.me/fx2data/46', '🧊 Style 3 Preview', $lang);
+    exit;
+}
+if ($data_cb === 'preview_desc_4') {
+    send_preview_image($chat_id, $msg_id, 'https://t.me/fx2data/47', '🧊 Style 4 Preview', $lang);
+    exit;
+}
+
+
     if ($data_cb === 'show_langs') {
         send_lang_menu($chat_id, $msg_id, $lang);
         exit;
     }
+    if ($data_cb === 'infow9f') {
+    infow9f($chat_id, $msg_id, $lang);
+    exit;
+}
+
+
+    if ($data_cb === 'show_desc_menu') {
+        send_desc_menu($chat_id, $msg_id, $lang);
+        exit;
+    }
+
+    if ($data_cb === 'desc_cars') {
+        send_cars_characters_menu($chat_id, $msg_id, $lang);
+        exit;
+    }
+
+    if ($data_cb === 'desc_planes' || $data_cb === 'desc_bikes') {
+        $msg = $lang === 'ar' ? 'قريباً 🚧' : 'Coming soon 🚧';
+        bot('answerCallbackQuery', [
+            'callback_query_id' => $callback['id'],
+            'text' => $msg,
+            'show_alert' => true
+        ]);
+        exit;
+    }
+
+    
+    if ($data_cb === 'start_desc_1') {
+        save_caption_style($user_id, 1);
+        bot('editMessageText', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id,
+            'text' => text('start_photo', $lang),
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'desc_cars']]]
+            ])
+        ]);
+        exit;
+    }
+
+    if ($data_cb === 'start_desc_2') {
+        save_caption_style($user_id, 2);
+        bot('editMessageText', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id,
+            'text' => text('start_photo', $lang),
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'desc_cars']]]
+            ])
+        ]);
+        exit;
+    }
+
+    if ($data_cb === 'start_desc_3') {
+        save_caption_style($user_id, 3);
+        bot('editMessageText', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id,
+            'text' => text('start_photo', $lang),
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'desc_cars']]]
+            ])
+        ]);
+        exit;
+    }
+
+    if ($data_cb === 'start_desc_4') {
+        save_caption_style($user_id, 4);
+        bot('editMessageText', [
+            'chat_id' => $chat_id,
+            'message_id' => $msg_id,
+            'text' => text('start_photo', $lang),
+            'reply_markup' => json_encode([
+                'inline_keyboard' => [[['text' => text('back', $lang), 'callback_data' => 'desc_cars']]]
+            ])
+        ]);
+        exit;
+    }
+
+    
+
+
 
     if ($data_cb === 'start_back') {
         // حذف الرسالة القديمة قبل إرسال رسالة ستارت جديدة
@@ -452,4 +845,6 @@ if ($callback) {
         exit;
     }
 }
+
+
 
